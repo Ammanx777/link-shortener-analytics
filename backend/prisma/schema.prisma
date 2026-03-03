@@ -7,10 +7,35 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id               Int      @id @default(autoincrement())
+  email            String   @unique
+  password         String
+  createdAt        DateTime @default(now())
+  links            Link[]
+
+  resetToken       String?
+  resetTokenExpiry DateTime?
+}
+
 model Link {
+  id         Int       @id @default(autoincrement())
+  original   String
+  shortCode  String    @unique
+  clicks     Int       @default(0)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime?
+  userId     Int
+  user       User      @relation(fields: [userId], references: [id])
+  clicksData Click[]
+}
+
+model Click {
   id        Int      @id @default(autoincrement())
-  original  String   @db.Text
-  shortCode String   @unique
-  clicks    Int      @default(0)
+  linkId    Int
+  link      Link     @relation(fields: [linkId], references: [id])
+  ip        String?
+  userAgent String?
+  referrer  String?
   createdAt DateTime @default(now())
 }
