@@ -4,15 +4,18 @@ import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
 export default function ResetPassword() {
+
   const searchParams = useSearchParams();
   const router = useRouter();
+
   const token = searchParams.get("token");
 
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleReset = async () => {
+  const reset = async () => {
+
     if (!token) {
       setError("Invalid reset link");
       return;
@@ -21,49 +24,59 @@ export default function ResetPassword() {
     try {
       const res = await fetch("http://localhost:5000/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           token,
           newPassword: password,
         }),
       });
 
-      const data = await res.json();
-
       if (!res.ok) {
-        setError(data.error);
+        setError("Reset failed");
         return;
       }
 
-      setMessage("Password updated successfully");
-      setTimeout(() => router.push("/login"), 2000);
+      setMessage("Password updated");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 2000);
 
     } catch {
-      setError("Something went wrong");
+      setError("Server error");
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold">Reset Password</h1>
+    <div className="min-h-screen flex items-center justify-center">
 
-      <input
-        type="password"
-        placeholder="Enter new password"
-        className="border p-2 w-64"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+      <div className="bg-white dark:bg-zinc-900 shadow-xl p-8 rounded-xl flex flex-col gap-4 w-96">
 
-      <button
-        onClick={handleReset}
-        className="bg-black text-white px-6 py-2"
-      >
-        Reset Password
-      </button>
+        <h1 className="text-xl font-bold">
+          Reset Password
+        </h1>
 
-      {message && <p className="text-green-600">{message}</p>}
-      {error && <p className="text-red-600">{error}</p>}
+        <input
+          type="password"
+          placeholder="New password"
+          className="border p-2 rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={reset}
+          className="bg-black text-white py-2 rounded"
+        >
+          Reset Password
+        </button>
+
+        {message && <p className="text-green-600">{message}</p>}
+        {error && <p className="text-red-600">{error}</p>}
+
+      </div>
     </div>
   );
 }

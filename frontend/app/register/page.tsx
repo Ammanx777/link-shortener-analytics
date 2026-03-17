@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 export default function Register() {
   const router = useRouter();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -15,7 +16,9 @@ export default function Register() {
     try {
       const res = await fetch("http://localhost:5000/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ email, password }),
       });
 
@@ -33,33 +36,44 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-bold">Register</h1>
+    <div className="min-h-screen flex items-center justify-center">
 
-      <input
-        type="email"
-        placeholder="Email"
-        className="border p-2 w-64"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+      <div className="bg-white dark:bg-zinc-900 shadow-xl p-8 rounded-xl flex flex-col gap-4 w-96">
 
-      <input
-        type="password"
-        placeholder="Password"
-        className="border p-2 w-64"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <h1 className="text-2xl font-bold text-center">
+          Create Account
+        </h1>
 
-      <button
-        onClick={register}
-        className="bg-black text-white px-6 py-2"
-      >
-        Register
-      </button>
+        <input
+          type="email"
+          placeholder="Email"
+          className="border p-2 rounded"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
 
-      {error && <p className="text-red-500">{error}</p>}
+        <input
+          type="password"
+          placeholder="Password"
+          className="border p-2 rounded"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          onClick={register}
+          className="bg-black text-white py-2 rounded"
+        >
+          Register
+        </button>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center">
+            {error}
+          </p>
+        )}
+
+      </div>
     </div>
   );
 }

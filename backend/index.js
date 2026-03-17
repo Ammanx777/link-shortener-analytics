@@ -1,4 +1,6 @@
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const crypto = require("crypto");
 const validator = require("validator");
 const { customAlphabet } = require("nanoid");
@@ -34,8 +36,35 @@ function authenticateToken(req, res, next) {
 
 app.use(cors());
 app.use(express.json());
+app.use(helmet());
 
-app.post("/register", async (req, res) => {
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use(globalLimiter);
+// 🔐 Auth limiter (login/register/reset)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // 10 attempts per IP
+  message: {
+    error: "Too many attempts. Please try again later."
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// 🔗 Link creation limiter
+const createLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20, // 20 link creations per 15 min
+  message: {
+    error: "Too many links created. Please try again later."
+  }
+});
+
+app.post("/register", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -72,7 +101,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -104,6 +133,49 @@ app.post("/login", async (req, res) => {
   }
 });
 
+app.post("/google-login", async (req, res) => {
+  try {
+
+    console.log("Incoming body:", req.body); // DEBUG
+
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    let user = await prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          password: "google-auth", // 🔥 IMPORTANT FIX
+        },
+      });
+    }
+
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET missing!");
+      return res.status(500).json({ error: "JWT config error" });
+    }
+
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.json({ token });
+
+  } catch (err) {
+    console.error("❌ GOOGLE LOGIN ERROR:", err); // 🔥 CRITICAL
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.get("/me", authenticateToken, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
@@ -117,7 +189,7 @@ app.get("/me", authenticateToken, async (req, res) => {
   }
 });
 
-app.post("/forgot-password", async (req, res) => {
+app.post("/forgot-password", authLimiter, async (req, res) => {
   try {
     const { email } = req.body;
 
@@ -157,7 +229,7 @@ app.post("/forgot-password", async (req, res) => {
   }
 });
 
-app.post("/reset-password", async (req, res) => {
+app.post("/reset-password", authLimiter, async (req, res) => {
   try {
     const { token, newPassword } = req.body;
 
@@ -199,7 +271,7 @@ app.post("/reset-password", async (req, res) => {
 
 /* 🔹 ADD THE /create ROUTE HERE */
 
-app.post("/create", authenticateToken, async (req, res) => {
+app.post("/create", authenticateToken, createLimiter, async (req, res) => {
   try {
     const { url, customCode, expiresAt } = req.body;
 

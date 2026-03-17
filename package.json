@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "nanoid": "^5.1.6"
+    "nanoid": "^5.1.6",
+    "next-auth": "^4.24.13"
   }
 }
