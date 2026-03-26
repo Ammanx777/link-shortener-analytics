@@ -1,6 +1,7 @@
 "use client";
 
 import { QRCodeCanvas } from "qrcode.react";
+import { X, Download } from "lucide-react";
 
 export default function QRCodeModal({ url, onClose }: any) {
 
@@ -18,38 +19,43 @@ export default function QRCodeModal({ url, onClose }: any) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
 
-      <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-lg w-[300px]">
+<div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
 
-        <h2 className="text-lg font-semibold mb-4 text-center">
-          QR Code
-        </h2>
+  <div className="glass-strong w-[320px] rounded-3xl p-6 text-center relative">
 
-        <div className="flex justify-center mb-4">
-          <QRCodeCanvas value={url} size={180} />
-        </div>
+    {/* DOWNLOAD (top-left) */}
+    <button
+      onClick={downloadQR}
+      className="absolute top-3 left-3 p-1.5 rounded-full bg-green-600 text-white hover:bg-green-700 transition"
+    >
+      <Download size={16} />
+    </button>
 
-        <p className="text-xs text-gray-500 text-center break-all mb-4">
-          {url}
-        </p>
+    {/* CLOSE (top-right) */}
+    <button
+      onClick={onClose}
+      className="absolute top-3 right-3 p-1.5 rounded-full bg-white/80 dark:bg-gray-800 text-gray-800 dark:text-white hover:scale-110 transition"
+    >
+      <X size={16} />
+    </button>
 
-        <button
-          onClick={downloadQR}
-          className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg mb-2"
-        >
-          Download
-        </button>
+    <h2 className="text-lg font-semibold text-primary mb-4">
+      QR Code
+    </h2>
 
-        <button
-          onClick={onClose}
-          className="w-full bg-gray-800 text-white py-2 rounded-lg"
-        >
-          Close
-        </button>
-
+    <div className="flex justify-center mb-5">
+      <div className="bg-white p-3 rounded-xl shadow">
+        <QRCodeCanvas value={url} size={180} />
       </div>
-
     </div>
+
+    <p className="text-xs text-secondary break-all px-2">
+      {url}
+    </p>
+
+  </div>
+
+</div>
   );
 }

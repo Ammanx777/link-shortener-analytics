@@ -2,18 +2,145 @@
 @tailwind components;
 @tailwind utilities;
 
-/* optional theme variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f5f7fb;
+  --foreground: #0f172a;
 }
 
 .dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
+  --background: #050509;
+  --foreground: #e5e7eb;
 }
 
+html,
 body {
+  height: 100%;
   background: var(--background);
   color: var(--foreground);
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+* {
+  transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.glass {
+  @apply bg-white/80 backdrop-blur-xl border border-black/10 shadow-lg;
+}
+
+.dark .glass {
+  @apply bg-white/5 border-white/10;
+}
+
+.glass-strong {
+  @apply bg-white/90 backdrop-blur-2xl border border-black/10 shadow-xl;
+}
+
+.dark .glass-strong {
+  @apply bg-white/10 border-white/10;
+}
+
+.glass-card {
+  @apply bg-white/75 backdrop-blur-lg border border-black/10 rounded-xl;
+}
+
+.dark .glass-card {
+  @apply bg-white/5 border-white/10;
+}
+
+.gradient-bg {
+  background: linear-gradient(
+    135deg,
+    #5ea2ff 0%,
+    #7dd3fc 40%,
+    #60a5fa 100%
+  );
+}
+
+.dark .gradient-bg {
+  background: linear-gradient(
+    135deg,
+    #050509 0%,
+    #0f172a 40%,
+    #020617 100%
+  );
+}
+
+.glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  background: rgba(59, 130, 246, 0.3);
+  filter: blur(120px);
+  border-radius: 50%;
+  z-index: 0;
+}
+
+.dark .glow {
+  background: rgba(99, 102, 241, 0.25);
+}
+
+.input-glass {
+  @apply bg-white/70 text-gray-900 placeholder:text-gray-500 outline-none text-sm px-4 py-2 rounded-lg;
+}
+
+.dark .input-glass {
+  @apply bg-white/5 text-white placeholder:text-white/40;
+}
+
+.btn-glass {
+  @apply px-5 py-2 rounded-full bg-white/90 text-gray-900 shadow hover:scale-105 active:scale-95 transition;
+}
+
+.dark .btn-glass {
+  @apply bg-white/10 text-white;
+}
+
+/* TEXT SYSTEM */
+
+.text-primary {
+  @apply text-gray-900;
+}
+
+.dark .text-primary {
+  @apply text-white;
+}
+
+.text-secondary {
+  @apply text-gray-600;
+}
+
+.dark .text-secondary {
+  @apply text-white/60;
+}
+
+.text-muted {
+  @apply text-gray-500;
+}
+
+.dark .text-muted {
+  @apply text-white/40;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+h1, h2, h3 {
+  @apply text-gray-900;
+}
+
+.dark h1, 
+.dark h2, 
+.dark h3 {
+  @apply text-white;
 }

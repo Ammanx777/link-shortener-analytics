@@ -449,13 +449,27 @@ app.get("/:shortCode", async (req, res) => {
 
 app.delete("/links/:id", authenticateToken, async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
+    const id = Number(req.params.id);
+
+    console.log("REQ PARAM ID:", req.params.id);
+    console.log("PARSED ID:", id);
+    console.log("USER FROM TOKEN:", req.user);
 
     const link = await prisma.link.findUnique({
       where: { id },
     });
 
-    if (!link || link.userId !== req.user.userId) {
+    console.log("FOUND LINK:", link);
+
+    if (link) {
+      console.log("LINK USER ID:", link.userId);
+    }
+
+    if (!link) {
+      return res.status(404).json({ error: "Link not found" });
+    }
+
+    if (link.userId !== req.user.userId) {
       return res.status(403).json({ error: "Not authorized" });
     }
 
@@ -466,7 +480,7 @@ app.delete("/links/:id", authenticateToken, async (req, res) => {
     res.json({ message: "Link deleted successfully" });
 
   } catch (error) {
-    console.error(error);
+    console.error("DELETE ERROR:", error);
     res.status(500).json({ error: "Failed to delete link" });
   }
 });

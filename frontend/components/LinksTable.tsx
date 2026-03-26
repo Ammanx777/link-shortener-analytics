@@ -17,6 +17,7 @@ export default function LinksTable({
 }: Props) {
 
   const [qrUrl, setQrUrl] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const copyToClipboard = (code: string) => {
     const url = `http://localhost:5000/${code}`;
@@ -26,16 +27,16 @@ export default function LinksTable({
 
   return (
     <>
-      <div className="bg-white dark:bg-gray-900 rounded-xl shadow overflow-hidden">
+      <div className="glass-card rounded-2xl overflow-hidden">
 
         <table className="w-full text-sm">
 
-          <thead className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
-            <tr className="border-b">
-              <th className="p-2 text-left">Original</th>
-              <th className="p-2 text-left">Short</th>
-              <th className="p-2 text-left">Clicks</th>
-              <th className="p-2 text-left">Actions</th>
+          <thead className="bg-black/5 dark:bg-white/10 text-secondary">
+            <tr>
+              <th className="p-3 text-left">Original</th>
+              <th className="p-3 text-left">Short</th>
+              <th className="p-3 text-left">Clicks</th>
+              <th className="p-3 text-left">Actions</th>
             </tr>
           </thead>
 
@@ -43,7 +44,7 @@ export default function LinksTable({
 
             {links.length === 0 && (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
+                <td colSpan={4} className="p-6 text-center text-muted">
                   No links yet
                 </td>
               </tr>
@@ -53,25 +54,27 @@ export default function LinksTable({
 
               <tr
                 key={link.id}
-                className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+                className="border-t border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/5"
               >
 
-                <td className="p-2">{link.original}</td>
+                <td className="p-3 text-primary truncate max-w-xs">
+                  {link.original}
+                </td>
 
-                <td className="p-2">
+                <td className="p-3">
                   <div className="flex items-center gap-2">
 
                     <a
                       href={`http://localhost:5000/${link.shortCode}`}
                       target="_blank"
-                      className="text-blue-600 underline"
+                      className="text-blue-500 hover:underline"
                     >
                       {link.shortCode}
                     </a>
 
                     <button
                       onClick={() => copyToClipboard(link.shortCode)}
-                      className="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-600 transition"
+                      className="text-xs glass px-2 py-1 rounded-md text-stone-700 dark:text-white"
                     >
                       Copy
                     </button>
@@ -79,13 +82,15 @@ export default function LinksTable({
                   </div>
                 </td>
 
-                <td className="p-2">{link.clicks}</td>
+                <td className="p-3 text-primary">
+                  {link.clicks}
+                </td>
 
-                <td className="p-2 flex gap-2">
+                <td className="p-3 flex gap-2">
 
                   <button
                     onClick={() => onAnalytics(link.shortCode)}
-                    className="bg-gray-800 hover:bg-gray-900 text-white px-3 py-1 rounded text-xs"
+                    className="glass px-3 py-1 rounded-md text-xs text-stone-700 dark:text-white"
                   >
                     Analytics
                   </button>
@@ -94,14 +99,14 @@ export default function LinksTable({
                     onClick={() =>
                       setQrUrl(`http://localhost:5000/${link.shortCode}`)
                     }
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-xs"
+                    className="px-3 py-1 rounded-md text-xs glass text-stone-700 dark:text-white"
                   >
                     QR
                   </button>
 
                   <button
-                    onClick={() => onDelete(link.id)}
-                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs"
+                    onClick={() => setDeleteId(link.id)}
+                    className="px-3 py-1 rounded-md text-xs bg-red-500 hover:bg-red-600 text-white"
                   >
                     Delete
                   </button>
@@ -118,12 +123,51 @@ export default function LinksTable({
 
       </div>
 
-      {/* ✅ QR MODAL (FIXED) */}
       {qrUrl && (
         <QRCodeModal
           url={qrUrl}
           onClose={() => setQrUrl(null)}
         />
+      )}
+
+      {deleteId && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+          <div className="glass-strong rounded-2xl p-6 w-[320px] text-center">
+
+            <h3 className="text-primary font-semibold mb-2">
+              Delete Link?
+            </h3>
+
+            <p className="text-secondary text-sm mb-5">
+              This action cannot be undone.
+            </p>
+
+            <div className="flex gap-3">
+
+              <button
+                onClick={() => setDeleteId(null)}
+                className="flex-1 py-2 rounded-lg bg-black/10 dark:bg-white/10 text-primary"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={() => {
+                  onDelete(deleteId);
+                  setDeleteId(null);
+                  toast.success("Link deleted");
+                }}
+                className="flex-1 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white"
+              >
+                Delete
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
       )}
     </>
   );

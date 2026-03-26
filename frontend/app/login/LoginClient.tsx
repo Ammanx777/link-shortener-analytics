@@ -5,66 +5,82 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 export default function LoginClient() {
-
   const router = useRouter();
   const { status, data: session } = useSession();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [theme, setTheme] = useState("dark");
+  const [loading, setLoading] = useState(true);
 
-  // 🔥 CRITICAL FIX: ensure JWT is created BEFORE redirect
+  // THEME INIT
   useEffect(() => {
+    const saved = localStorage.getItem("theme") || "dark";
+    setTheme(saved);
+    document.documentElement.classList.toggle("dark", saved === "dark");
+  }, []);
 
-    const run = async () => {
+  const toggleTheme = () => {
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    localStorage.setItem("theme", newTheme);
+    document.documentElement.classList.toggle("dark", newTheme === "dark");
+  };
 
-      if (status !== "authenticated") return;
+  // 🔥 MAIN AUTH HANDLER (FIXED)
+  useEffect(() => {
+    const handleAuth = async () => {
+      if (status === "loading") return;
 
-      // 🔍 Check if token already exists
       const existingToken = localStorage.getItem("token");
 
+      // ✅ If already logged in → go dashboard
       if (existingToken) {
-        router.replace("/");
+        router.replace("/dashboard"); // IMPORTANT
         return;
       }
 
-      try {
-        const res = await fetch("http://localhost:5000/google-login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email: session?.user?.email
-          })
-        });
+      // ✅ If Google authenticated → exchange token
+      if (status === "authenticated" && session?.user?.email) {
+        try {
+          const res = await fetch("http://localhost:5000/google-login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: session.user.email,
+            }),
+          });
 
-        const data = await res.json();
+          const data = await res.json();
 
-        console.log("Google → JWT response:", data);
+          if (!res.ok || !data.token) {
+            setError("Google login failed");
+            setLoading(false);
+            return;
+          }
 
-        if (!data.token) {
-          console.error("NO TOKEN RECEIVED");
+          localStorage.setItem("token", data.token);
+
+          // 🔥 DIRECT DASHBOARD REDIRECT (NO LANDING PAGE)
+          router.replace("/dashboard");
           return;
+        } catch (err) {
+          console.error(err);
+          setError("Google login error");
         }
-
-        localStorage.setItem("token", data.token);
-
-        // 🔥 ONLY redirect AFTER token exists
-        router.replace("/");
-
-      } catch (err) {
-        console.error("Google sync failed:", err);
       }
+
+      setLoading(false);
     };
 
-    run();
-
+    handleAuth();
   }, [status, session, router]);
 
-  // normal login
+  // NORMAL LOGIN
   const login = async () => {
-
     setError("");
 
     try {
@@ -84,48 +100,78 @@ export default function LoginClient() {
       }
 
       localStorage.setItem("token", data.token);
-      router.replace("/");
 
+      // 🔥 FIX: go directly to dashboard
+      router.replace("/dashboard");
     } catch {
       setError("Server error");
     }
   };
 
+  // LOADING STATE (IMPORTANT)
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center w-full">
+        Loading...
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full max-w-md bg-white dark:bg-zinc-900 shadow-xl rounded-xl p-8 flex flex-col gap-4">
-
-      <h1 className="text-2xl font-bold text-center">Login</h1>
-
-      <input
-        type="email"
-        placeholder="Email"
-        className="border p-2"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-
-      <input
-        type="password"
-        placeholder="Password"
-        className="border p-2"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      <button onClick={login} className="bg-black text-white py-2">
-        Login
-      </button>
-
-      <div className="text-center text-sm">OR</div>
-
+    <>
       <button
-        onClick={() => signIn("google")}
-        className="bg-red-500 text-white py-2"
+        onClick={toggleTheme}
+        className="absolute top-6 right-6 glass px-4 py-2 rounded-full text-xs text-primary"
       >
-        Continue with Google
+        {theme === "dark" ? "Dark" : "Light"}
       </button>
 
-      {error && <p className="text-red-500">{error}</p>}
-    </div>
+      <div className="flex flex-col gap-4 w-full max-w-sm">
+        <h2 className="text-2xl font-semibold text-primary text-center">
+          Welcome Back
+        </h2>
+
+        <p className="text-sm text-secondary text-center">
+          Login to continue to your dashboard
+        </p>
+
+        <input
+          type="email"
+          placeholder="Email"
+          className="glass input-glass rounded-lg"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="glass input-glass rounded-lg"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button onClick={login} className="btn-glass font-medium">
+          Login
+        </button>
+
+        <div className="flex items-center gap-3 text-xs text-muted">
+          <div className="flex-1 h-[1px] bg-black/10 dark:bg-white/20" />
+          OR
+          <div className="flex-1 h-[1px] bg-black/10 dark:bg-white/20" />
+        </div>
+
+        <button
+            onClick={() => signIn("google", { callbackUrl: "/login" })} // IMPORTANT
+          className="glass flex items-center justify-center gap-2 py-2 rounded-lg text-sm text-primary hover:scale-[1.02] transition"
+        >
+          Continue with Google
+        </button>
+
+        {error && (
+          <p className="text-red-500 text-sm text-center">{error}</p>
+        )}
+      </div>
+    </>
   );
 }

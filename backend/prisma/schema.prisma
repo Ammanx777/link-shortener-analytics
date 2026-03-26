@@ -33,7 +33,7 @@ model Link {
 model Click {
   id        Int      @id @default(autoincrement())
   linkId    Int
-  link      Link     @relation(fields: [linkId], references: [id])
+  link   Link @relation(fields: [linkId], references: [id], onDelete: Cascade)
   ip        String?
   userAgent String?
   referrer  String?

@@ -3,7 +3,7 @@
 import toast from "react-hot-toast";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 import CreateLinkForm from "@/components/CreateLinkForm";
 import LinksTable from "@/components/LinksTable";
@@ -12,7 +12,6 @@ import DashboardLayout from "@/components/DashboardLayout";
 import StatsCards from "@/components/StatsCards";
 
 export default function Home() {
-
   const router = useRouter();
   const { status, data: session } = useSession();
 
@@ -26,88 +25,75 @@ export default function Home() {
   const [customCode, setCustomCode] = useState("");
   const [expiresAt, setExpiresAt] = useState("");
 
-  /*
-  GOOGLE LOGIN SYNC → GET JWT FROM BACKEND
-  */
   useEffect(() => {
+    const initAuth = async () => {
+      if (status === "loading") return;
 
-    const syncGoogleUser = async () => {
+      let jwt = localStorage.getItem("token");
 
-      if (status !== "authenticated") return;
+      if (!jwt && status === "authenticated" && session?.user?.email) {
+        try {
+          const res = await fetch("http://localhost:5000/google-login", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: session.user.email,
+            }),
+          });
 
-      const existingToken = localStorage.getItem("token");
-      if (existingToken) return;
+          const data = await res.json();
 
-      try {
-
-        const res = await fetch("http://localhost:5000/google-login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            email: session?.user?.email || ""
-          })
-        });
-
-        const data = await res.json();
-
-        if (data.token) {
-          localStorage.setItem("token", data.token);
-          window.location.reload();
+          if (res.ok && data.token) {
+            localStorage.setItem("token", data.token);
+            jwt = data.token;
+          } else {
+            toast.error("Google login failed");
+            router.replace("/login");
+            return;
+          }
+        } catch {
+          toast.error("Google login error");
+          router.replace("/login");
+          return;
         }
-
-      } catch (err) {
-        console.error("Google sync failed:", err);
-        toast.error("Google login sync failed");
       }
 
+      if (!jwt) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const res = await fetch("http://localhost:5000/me", {
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+          },
+        });
+
+        if (!res.ok) {
+          localStorage.removeItem("token");
+          router.replace("/login");
+          return;
+        }
+
+        setToken(jwt);
+      } catch {
+        localStorage.removeItem("token");
+        router.replace("/login");
+      }
     };
 
-    syncGoogleUser();
+    initAuth();
+  }, [status, session, router]);
 
-  }, [status, session]);
-
-  /*
-  AUTH CHECK
-  */
   useEffect(() => {
-
-    if (status === "loading") return;
-
-    const jwt = localStorage.getItem("token");
-
-    if (jwt) {
-      setToken(jwt);
-      return;
-    }
-
-    if (status === "authenticated") {
-      setToken("google");
-      return;
-    }
-
-    router.replace("/login");
-
-  }, [status, router]);
-
-  /*
-  FETCH LINKS
-  */
-  useEffect(() => {
-
     if (!token) return;
-    if (token === "google") return;
-
     fetchLinks();
-
   }, [token]);
 
-  /*
-  AUTO REFRESH ANALYTICS
-  */
   useEffect(() => {
-
     if (!selectedCode) return;
 
     const interval = setInterval(() => {
@@ -115,16 +101,10 @@ export default function Home() {
     }, 5000);
 
     return () => clearInterval(interval);
-
   }, [selectedCode]);
 
-  /*
-  FETCH LINKS
-  */
   const fetchLinks = async () => {
-
     try {
-
       const jwt = localStorage.getItem("token");
       if (!jwt) return;
 
@@ -141,19 +121,13 @@ export default function Home() {
       } else {
         setLinks([]);
       }
-
-    } catch (err) {
-      console.error("Fetch links error:", err);
+    } catch {
       toast.error("Failed to fetch links");
       setLinks([]);
     }
   };
 
-  /*
-  CREATE SHORT URL
-  */
   const createShortUrl = async () => {
-
     const jwt = localStorage.getItem("token");
 
     if (!jwt) {
@@ -192,11 +166,7 @@ export default function Home() {
     fetchLinks();
   };
 
-  /*
-  FETCH ANALYTICS
-  */
   const fetchAnalytics = async (shortCode: string) => {
-
     const jwt = localStorage.getItem("token");
     if (!jwt) return;
 
@@ -215,73 +185,81 @@ export default function Home() {
     setSelectedCode(shortCode);
   };
 
-  /*
-  DELETE LINK
-  */
   const deleteLink = async (id: number) => {
-
     const jwt = localStorage.getItem("token");
     if (!jwt) return;
 
-    await fetch(`http://localhost:5000/links/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-      },
-    });
+    try {
+      const res = await fetch(`http://localhost:5000/links/${id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+        },
+      });
 
-    toast.success("Link deleted");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete link");
+        return;
+      }
 
-    setAnalytics(null);
-    setSelectedCode(null);
+      toast.success("Link deleted");
 
-    fetchLinks();
+      setLinks((prev) => prev.filter((l) => l.id !== id));
+
+      if (selectedCode) {
+        setAnalytics(null);
+        setSelectedCode(null);
+      }
+
+    } catch {
+      toast.error("Server error while deleting");
+    }
   };
 
-  /*
-  LOADING STATE
-  */
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-white/60">
         Loading dashboard...
       </div>
     );
   }
 
   return (
-  <DashboardLayout>
+    <DashboardLayout>
+      <div className="glass-strong p-6 rounded-2xl mb-8">
+        <h1 className="text-3xl font-semibold">
+          Dashboard Overview
+        </h1>
+      </div>
 
-    <h1 className="text-3xl font-bold mb-8">
-  Dashboard Overview
-</h1>
+      <StatsCards links={links} />
 
-    {/* STATS */}
-    <StatsCards links={links} />
+      <div className="glass-strong p-6 rounded-2xl mt-8">
+        <CreateLinkForm
+          url={url}
+          setUrl={setUrl}
+          customCode={customCode}
+          setCustomCode={setCustomCode}
+          expiresAt={expiresAt}
+          setExpiresAt={setExpiresAt}
+          onSubmit={createShortUrl}
+        />
+      </div>
 
-    {/* FORM */}
-    <CreateLinkForm
-      url={url}
-      setUrl={setUrl}
-      customCode={customCode}
-      setCustomCode={setCustomCode}
-      expiresAt={expiresAt}
-      setExpiresAt={setExpiresAt}
-      onSubmit={createShortUrl}
-    />
+      <div className="glass-strong p-6 rounded-2xl mt-8">
+        <LinksTable
+          links={links}
+          onAnalytics={fetchAnalytics}
+          onDelete={deleteLink}
+        />
+      </div>
 
-    {/* TABLE */}
-    <LinksTable
-      links={links}
-      onAnalytics={fetchAnalytics}
-      onDelete={deleteLink}
-    />
-
-    {/* ANALYTICS */}
-    {analytics && (
-      <AnalyticsChart analytics={analytics} />
-    )}
-
-  </DashboardLayout>
-);
+      {analytics && (
+        <div className="glass-strong p-6 rounded-2xl mt-8">
+          <AnalyticsChart analytics={analytics} />
+        </div>
+      )}
+    </DashboardLayout>
+  );
 }

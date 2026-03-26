@@ -62,28 +62,31 @@ export default function AnalyticsChart({
       {
         label: "Clicks",
         data: Object.values(grouped),
-        borderColor: "rgb(59,130,246)",
-        backgroundColor: "rgba(59,130,246,0.5)",
+        borderColor: "rgba(96,165,250,1)",
+        backgroundColor: "rgba(96,165,250,0.4)",
+        tension: 0.4,
       },
     ],
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 p-6 rounded-xl shadow">
+    <div className="glass-strong p-6 rounded-2xl">
 
-      <h2 className="text-lg font-semibold mb-4">
+      <h2 className="text-lg font-semibold mb-2">
         Analytics for {analytics.shortCode}
       </h2>
 
-      <p className="text-gray-500 mb-4">
+      <p className="text-white/60 mb-6 text-sm">
         Total Clicks: {analytics.clicks}
       </p>
 
-      {chartType === "line" ? (
-        <Line data={chartData} />
-      ) : (
-        <Bar data={chartData} />
-      )}
+      <div className="bg-white/5 rounded-xl p-4">
+        {chartType === "line" ? (
+          <Line data={chartData} />
+        ) : (
+          <Bar data={chartData} />
+        )}
+      </div>
 
     </div>
   );
