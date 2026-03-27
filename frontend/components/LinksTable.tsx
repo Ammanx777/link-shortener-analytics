@@ -20,7 +20,7 @@ export default function LinksTable({
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const copyToClipboard = (code: string) => {
-    const url = `http://localhost:5000/${code}`;
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/${code}`;
     navigator.clipboard.writeText(url);
     toast.success("Copied to clipboard");
   };
@@ -65,7 +65,7 @@ export default function LinksTable({
                   <div className="flex items-center gap-2">
 
                     <a
-                      href={`http://localhost:5000/${link.shortCode}`}
+                      href={`${process.env.NEXT_PUBLIC_API_URL}/${link.shortCode}`}
                       target="_blank"
                       className="text-blue-500 hover:underline"
                     >
@@ -97,7 +97,7 @@ export default function LinksTable({
 
                   <button
                     onClick={() =>
-                      setQrUrl(`http://localhost:5000/${link.shortCode}`)
+                      setQrUrl(`${process.env.NEXT_PUBLIC_API_URL}/${link.shortCode}`)
                     }
                     className="px-3 py-1 rounded-md text-xs glass text-stone-700 dark:text-white"
                   >

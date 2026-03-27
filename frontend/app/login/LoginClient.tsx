@@ -44,7 +44,7 @@ export default function LoginClient() {
       // ✅ If Google authenticated → exchange token
       if (status === "authenticated" && session?.user?.email) {
         try {
-          const res = await fetch("http://localhost:5000/google-login", {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/google-login`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -84,7 +84,7 @@ export default function LoginClient() {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/login", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

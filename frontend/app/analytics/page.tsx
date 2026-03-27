@@ -21,7 +21,7 @@ export default function AnalyticsPage() {
       const jwt = localStorage.getItem("token");
       if (!jwt) return;
 
-      const res = await fetch("http://localhost:5000/links", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/links`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
         },
@@ -45,7 +45,7 @@ export default function AnalyticsPage() {
       if (!jwt) return;
 
       const res = await fetch(
-        `http://localhost:5000/analytics/${selectedCode}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/analytics/${selectedCode}`,
         {
           headers: {
             Authorization: `Bearer ${jwt}`,

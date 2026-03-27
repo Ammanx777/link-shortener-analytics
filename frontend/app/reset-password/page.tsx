@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function ResetPassword() {
-
+function ResetPasswordContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -15,14 +14,13 @@ export default function ResetPassword() {
   const [error, setError] = useState("");
 
   const reset = async () => {
-
     if (!token) {
       setError("Invalid reset link");
       return;
     }
 
     try {
-      const res = await fetch("http://localhost:5000/reset-password", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -51,7 +49,6 @@ export default function ResetPassword() {
 
   return (
     <div className="min-h-screen flex items-center justify-center">
-
       <div className="bg-white dark:bg-zinc-900 shadow-xl p-8 rounded-xl flex flex-col gap-4 w-96">
 
         <h1 className="text-xl font-bold">
@@ -78,5 +75,13 @@ export default function ResetPassword() {
 
       </div>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

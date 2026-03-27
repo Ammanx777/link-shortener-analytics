@@ -5,11 +5,11 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-import CreateLinkForm from "@/components/CreateLinkForm";
-import LinksTable from "@/components/LinksTable";
-import AnalyticsChart from "@/components/AnalyticsChart";
-import DashboardLayout from "@/components/DashboardLayout";
-import StatsCards from "@/components/StatsCards";
+import CreateLinkForm from "../../components/CreateLinkForm";
+import LinksTable from "../../components/LinksTable";
+import AnalyticsChart from "../../components/AnalyticsChart";
+import DashboardLayout from "../../components/DashboardLayout";
+import StatsCards from "../../components/StatsCards";
 
 export default function Home() {
   const router = useRouter();
@@ -33,7 +33,7 @@ export default function Home() {
 
       if (!jwt && status === "authenticated" && session?.user?.email) {
         try {
-          const res = await fetch("http://localhost:5000/google-login", {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/google-login`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -66,7 +66,7 @@ export default function Home() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/me", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
           headers: {
             Authorization: `Bearer ${jwt}`,
           },
@@ -108,7 +108,7 @@ export default function Home() {
       const jwt = localStorage.getItem("token");
       if (!jwt) return;
 
-      const res = await fetch("http://localhost:5000/links", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/links`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
         },
@@ -135,7 +135,7 @@ export default function Home() {
       return;
     }
 
-    const res = await fetch("http://localhost:5000/create", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -170,9 +170,7 @@ export default function Home() {
     const jwt = localStorage.getItem("token");
     if (!jwt) return;
 
-    const res = await fetch(
-      `http://localhost:5000/analytics/${shortCode}`,
-      {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/${shortCode}`, {
         headers: {
           Authorization: `Bearer ${jwt}`,
         },
@@ -190,7 +188,7 @@ export default function Home() {
     if (!jwt) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/links/${id}`, {
+      const res =  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/links/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${jwt}`,

@@ -14,7 +14,7 @@ export const authOptions = {
   },
 
   callbacks: {
-    async redirect({ url, baseUrl }) {
+   async redirect({ url, baseUrl }: { url: string; baseUrl: string }) {
       // ✅ If callbackUrl is provided → use it
       if (url.startsWith("/")) {
         return `${baseUrl}${url}`;
