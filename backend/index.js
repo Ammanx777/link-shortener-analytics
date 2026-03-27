@@ -34,7 +34,10 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL,
+  credentials: true
+}));
 app.use(express.json());
 app.use(helmet());
 
@@ -356,7 +359,7 @@ app.post("/create", authenticateToken, createLimiter, async (req, res) => {
     }
 
     res.json({
-      shortUrl: `http://localhost:5000/${shortCode}`,
+      shortUrl: `${process.env.BASE_URL}/${shortCode}`,
       data: newLink,
     });
 
@@ -485,7 +488,7 @@ app.delete("/links/:id", authenticateToken, async (req, res) => {
   }
 });
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
